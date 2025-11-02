@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:aplikasi_chat/screens/login.dart';
-import 'package:image_picker/image_picker.dart';  // Tambahkan import ini
-import 'dart:io';  // Untuk File
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
   final String email;
@@ -21,7 +21,7 @@ class _ProfilePageState extends State<ProfilePage>
   String? profileImageUrl;
   String? password;
   Database? _database;
-  File? _selectedImage;  // Untuk menyimpan gambar yang dipilih sementara
+  File? _selectedImage;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -63,7 +63,6 @@ class _ProfilePageState extends State<ProfilePage>
   Future<void> _loadUserData() async {
     if (_database == null) return;
 
-    // Ambil data user dari tabel users
     final userResults = await _database!.query(
       'users',
       where: 'email = ?',
@@ -73,7 +72,6 @@ class _ProfilePageState extends State<ProfilePage>
     if (userResults.isNotEmpty) {
       password = userResults.first['password'] as String?;
 
-      // Cek apakah profil user sudah ada
       final profileResults = await _database!.query(
         'user_profiles',
         where: 'email = ?',
@@ -112,7 +110,6 @@ class _ProfilePageState extends State<ProfilePage>
     try {
       if (_database == null) return;
 
-      // Coba update dulu
       final affectedRows = await _database!.update(
         'user_profiles',
         {
@@ -124,7 +121,6 @@ class _ProfilePageState extends State<ProfilePage>
       );
 
       if (affectedRows == 0) {
-        // Jika tidak ada baris yang diupdate, lakukan insert
         await _database!.insert(
           'user_profiles',
           {
@@ -136,7 +132,6 @@ class _ProfilePageState extends State<ProfilePage>
         );
       }
 
-      // Refresh data dari database
       final updatedProfile = await _database!.query(
         'user_profiles',
         where: 'email = ?',
@@ -172,15 +167,14 @@ class _ProfilePageState extends State<ProfilePage>
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: source,
-        imageQuality: 70, // Compress image quality to 70%
-        maxWidth: 1024, // Limit maximum width
-        maxHeight: 1024, // Limit maximum height
+        imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
       );
 
       if (pickedFile != null) {
         final File imageFile = File(pickedFile.path);
         
-        // Verify that the file exists and is readable
         if (await imageFile.exists()) {
           setState(() {
             _selectedImage = imageFile;
@@ -246,7 +240,6 @@ class _ProfilePageState extends State<ProfilePage>
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                // Profile image
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.grey[800],
@@ -271,15 +264,11 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // Email
                 Text(
                   widget.email,
                   style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
                 const SizedBox(height: 30),
-
-                // Edit button
                 ElevatedButton.icon(
                   onPressed: () {
                     showDialog(
@@ -299,7 +288,6 @@ class _ProfilePageState extends State<ProfilePage>
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // Preview gambar
                                     CircleAvatar(
                                       radius: 40,
                                       backgroundColor: Colors.grey[800],
@@ -313,14 +301,13 @@ class _ProfilePageState extends State<ProfilePage>
                                           : null,
                                     ),
                                     const SizedBox(height: 10),
-                                    // Tombol pilih gambar
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         ElevatedButton.icon(
                                           onPressed: () async {
                                             await _pickImage(ImageSource.gallery);
-                                            setStateDialog(() {});  // Update dialog
+                                            setStateDialog(() {});
                                           },
                                           icon: const Icon(Icons.photo_library, color: Colors.black),
                                           label: const Text('Gallery', style: TextStyle(color: Colors.black)),
@@ -333,7 +320,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         ElevatedButton.icon(
                                           onPressed: () async {
                                             await _pickImage(ImageSource.camera);
-                                            setStateDialog(() {});  // Update dialog
+                                            setStateDialog(() {});
                                           },
                                           icon: const Icon(Icons.camera_alt, color: Colors.black),
                                           label: const Text('Camera', style: TextStyle(color: Colors.black)),
@@ -345,7 +332,6 @@ class _ProfilePageState extends State<ProfilePage>
                                       ],
                                     ),
                                     const SizedBox(height: 20),
-                                    // TextField untuk username
                                     TextField(
                                       controller: controller,
                                       style: const TextStyle(color: Colors.white),
@@ -367,7 +353,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 TextButton(
                                   onPressed: () {
                                     setState(() {
-                                      _selectedImage = null;  // Reset jika cancel
+                                      _selectedImage = null;
                                     });
                                     Navigator.pop(context);
                                   },
@@ -386,7 +372,6 @@ class _ProfilePageState extends State<ProfilePage>
                                       return;
                                     }
 
-                                    // Simpan path gambar yang akan digunakan
                                     String? finalImagePath;
                                     if (_selectedImage != null) {
                                       finalImagePath = _selectedImage!.path;
@@ -394,10 +379,8 @@ class _ProfilePageState extends State<ProfilePage>
                                       finalImagePath = profileImageUrl;
                                     }
 
-                                    // Tutup dialog terlebih dahulu
                                     Navigator.pop(context);
 
-                                    // Update profile
                                     await _updateProfile(
                                       controller.text.trim(),
                                       finalImagePath,
@@ -432,7 +415,6 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 30),
 
-                // Account info card
                 Card(
                   color: Colors.grey[850],
                   shape: RoundedRectangleBorder(
@@ -509,7 +491,6 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Logout Button
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(horizontal: 16),

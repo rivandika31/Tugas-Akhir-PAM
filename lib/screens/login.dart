@@ -27,7 +27,6 @@ class _LoginPageState extends State<LoginPage>
     super.initState();
     _initializeDatabase();
 
-    // Inisialisasi animasi
     _animationController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
@@ -35,7 +34,7 @@ class _LoginPageState extends State<LoginPage>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    _animationController.forward(); // Mulai animasi saat halaman dimuat
+    _animationController.forward();
   }
 
   @override
@@ -74,15 +73,15 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Latar belakang hitam
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('Login'),
-        backgroundColor: Colors.grey[900], // AppBar abu-abu gelap
-        foregroundColor: Colors.white, // Teks putih
+        backgroundColor: Colors.grey[900],
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Container(
-        decoration: BoxDecoration(  // Dihapus 'const' agar bisa menggunakan Colors.grey[800] dan Colors.grey[600]
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.black, Colors.grey[800]!, Colors.grey[600]!],
             begin: Alignment.topCenter,
@@ -97,7 +96,6 @@ class _LoginPageState extends State<LoginPage>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Judul dengan efek bayangan
                 Text(
                   'Welcome Back',
                   style: TextStyle(
@@ -115,7 +113,6 @@ class _LoginPageState extends State<LoginPage>
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                // TextField Email dengan styling - Menggunakan hintText agar tulisan hilang saat mengetik
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[800],
@@ -131,7 +128,7 @@ class _LoginPageState extends State<LoginPage>
                   child: TextField(
                     controller: _emailController,
                     decoration: InputDecoration(
-                      hintText: 'Email',  // Menggunakan hintText sebagai ganti labelText
+                      hintText: 'Email',
                       hintStyle: TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -146,7 +143,6 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
                 const SizedBox(height: 16),
-                // TextField Password dengan styling - Menggunakan hintText agar tulisan hilang saat mengetik
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[800],
@@ -162,7 +158,7 @@ class _LoginPageState extends State<LoginPage>
                   child: TextField(
                     controller: _passwordController,
                     decoration: InputDecoration(
-                      hintText: 'Password',  // Menggunakan hintText sebagai ganti labelText
+                      hintText: 'Password',
                       hintStyle: TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -177,11 +173,10 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
                 const SizedBox(height: 24),
-                // ElevatedButton dengan animasi scale saat ditekan
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  transform: Matrix4.identity()..scale(1.0), // Default scale
+                  transform: Matrix4.identity()..scale(1.0),
                   child: ElevatedButton(
                     onPressed: () async {
                       final email = _emailController.text;
@@ -225,7 +220,6 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
                 const SizedBox(height: 16),
-                // TextButton dengan styling
                 TextButton(
                   onPressed: () {
                     Navigator.pushReplacement(

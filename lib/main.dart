@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const LoginPage(), // Ubah ke nama class yang benar di chat.dart
+      home: const LoginPage(),
     );
   }
 }
