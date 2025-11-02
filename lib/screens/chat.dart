@@ -1,9 +1,15 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:io';
+
 import 'package:aplikasi_chat/screens/upgrade.dart';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:aplikasi_chat/screens/profile.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path/path.dart' as p;
 
 
 class ChatBot extends StatefulWidget {
@@ -22,6 +28,8 @@ class _ChatBotState extends State<ChatBot>
   late Animation<double> _fadeAnimation;
 
   final TextEditingController _input = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
+  final GlobalKey _attachKey = GlobalKey();
 
   final List<_Msg> _messages = [];
 
@@ -82,6 +90,152 @@ class _ChatBotState extends State<ChatBot>
       setState(() {
         _messages.add(_Msg(
             text: 'Terjadi kesalahan: $e', isUser: false, time: DateTime.now()));
+      });
+    }
+  }
+
+  Future<void> _showAttachmentMenu() async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RenderBox button = _attachKey.currentContext!.findRenderObject() as RenderBox;
+    final Offset offset = button.localToGlobal(Offset.zero, ancestor: overlay);
+    final RelativeRect position = RelativeRect.fromLTRB(
+      offset.dx,
+      offset.dy,
+      overlay.size.width - offset.dx - button.size.width,
+      overlay.size.height - offset.dy - button.size.height,
+    );
+
+    final action = await showMenu<_AttachAction>(
+      context: context,
+      position: position,
+      color: Colors.grey[900],
+      items: [
+        PopupMenuItem(
+          value: _AttachAction.gallery,
+          child: const Row(
+            children: [
+              Icon(Icons.photo_library, color: Colors.white70, size: 18),
+              SizedBox(width: 10),
+              Text('Gallery', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: _AttachAction.camera,
+          child: const Row(
+            children: [
+              Icon(Icons.camera_alt, color: Colors.white70, size: 18),
+              SizedBox(width: 10),
+              Text('Camera', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: _AttachAction.file,
+          child: const Row(
+            children: [
+              Icon(Icons.attach_file, color: Colors.white70, size: 18),
+              SizedBox(width: 10),
+              Text('File', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    switch (action) {
+      case _AttachAction.gallery:
+        await _pickImageFromGallery();
+        break;
+      case _AttachAction.camera:
+        await _captureFromCamera();
+        break;
+      case _AttachAction.file:
+        await _pickFile();
+        break;
+      case null:
+        break;
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? picked = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 2048,
+      );
+      if (picked != null) {
+        setState(() {
+          _messages.add(_Msg(
+            imagePath: picked.path,
+            isUser: true,
+            time: DateTime.now(),
+          ));
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_Msg(
+          text: 'Gagal mengambil gambar: $e',
+          isUser: false,
+          time: DateTime.now(),
+        ));
+      });
+    }
+  }
+
+  Future<void> _captureFromCamera() async {
+    try {
+      final XFile? captured = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 2048,
+      );
+      if (captured != null) {
+        setState(() {
+          _messages.add(_Msg(
+            imagePath: captured.path,
+            isUser: true,
+            time: DateTime.now(),
+          ));
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_Msg(
+          text: 'Kamera gagal dibuka: $e',
+          isUser: false,
+          time: DateTime.now(),
+        ));
+      });
+    }
+  }
+
+  Future<void> _pickFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+      final file = result?.files.single;
+      if (file != null && file.path != null) {
+        setState(() {
+          _messages.add(_Msg(
+            filePath: file.path!,
+            isUser: true,
+            time: DateTime.now(),
+            text: file.name,
+          ));
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_Msg(
+          text: 'Gagal memilih file: $e',
+          isUser: false,
+          time: DateTime.now(),
+        ));
       });
     }
   }
@@ -209,11 +363,32 @@ class _ChatBotState extends State<ChatBot>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                m.text,
-                                style: const TextStyle(color: Colors.white, fontSize: 15),
-                              ),
-                              const SizedBox(height: 6),
+                              if (m.imagePath != null) ...[
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.file(
+                                    File(m.imagePath!),
+                                    fit: BoxFit.cover,
+                                    width: MediaQuery.of(context).size.width * 0.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+                              if (m.filePath != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 6.0),
+                                  child: _FileAttachmentTile(
+                                    path: m.filePath!,
+                                    onOpen: () => OpenFilex.open(m.filePath!),
+                                  ),
+                                ),
+                              if ((m.text ?? '').isNotEmpty) ...[
+                                Text(
+                                  m.text!,
+                                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                                ),
+                                const SizedBox(height: 6),
+                              ],
                               Align(
                                 alignment: Alignment.bottomRight,
                                 child: Text(
@@ -239,6 +414,16 @@ class _ChatBotState extends State<ChatBot>
                   padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
                   child: Row(
                     children: [
+                      // Media / file action buttons on the left
+                      SizedBox(
+                        key: _attachKey,
+                        child: _RoundedIconButton(
+                          icon: Icons.add_circle_outline,
+                          tooltip: 'Lampirkan',
+                          onTap: _showAttachmentMenu,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
@@ -289,10 +474,12 @@ class _ChatBotState extends State<ChatBot>
 }
 
 class _Msg {
-  final String text;
+  final String? text;
   final bool isUser;
   final DateTime time;
-  _Msg({required this.text, required this.isUser, required this.time});
+  final String? imagePath; // local path for image
+  final String? filePath;  // local path for file
+  _Msg({this.text, required this.isUser, required this.time, this.imagePath, this.filePath});
 }
 
 enum TimeZone { wib, wita, wit, london }
@@ -324,6 +511,78 @@ class _ZoneToggle extends StatelessWidget {
           backgroundColor: Colors.grey[800],
         );
       }).toList(),
+    );
+  }
+}
+
+class _RoundedIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _RoundedIconButton({required this.icon, required this.tooltip, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.grey[800],
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, color: Colors.white70, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+enum _AttachAction { gallery, camera, file }
+
+class _FileAttachmentTile extends StatelessWidget {
+  final String path;
+  final VoidCallback onOpen;
+  const _FileAttachmentTile({required this.path, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final fileName = p.basename(path);
+    return InkWell(
+      onTap: onOpen,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.insert_drive_file, color: Colors.white70, size: 18),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                fileName,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.open_in_new, color: Colors.white70, size: 18),
+          ],
+        ),
+      ),
     );
   }
 }

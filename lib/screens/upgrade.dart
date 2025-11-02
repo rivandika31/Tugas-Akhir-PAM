@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:aplikasi_chat/screens/chat.dart';
 import 'package:aplikasi_chat/screens/payment_form.dart';
+import 'package:intl/intl.dart';
 
 
 class UpgradePage extends StatefulWidget {
@@ -15,7 +16,7 @@ class UpgradePage extends StatefulWidget {
 
 class _UpgradePageState extends State<UpgradePage>
     with SingleTickerProviderStateMixin {
-  bool isUSD = true;
+  Currency _currency = Currency.usd;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -39,12 +40,29 @@ class _UpgradePageState extends State<UpgradePage>
   }
 
   String formatPrice(double usdPrice) {
-    if (isUSD) {
-      return '\$${usdPrice.toStringAsFixed(0)}/month';
-    } else {
-      final idrPrice = usdPrice * 16658;
-      return 'Rp${idrPrice.toStringAsFixed(0)}/month';
+    // Simple static conversion rates relative to USD
+    const idrRate = 16658.0; // 1 USD -> 16,658 IDR
+    const eurRate = 0.92;    // 1 USD -> 0.92 EUR (approx)
+
+    late double amount;
+    late NumberFormat fmt;
+
+    switch (_currency) {
+      case Currency.idr:
+        amount = usdPrice * idrRate;
+        fmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+        break;
+      case Currency.usd:
+        amount = usdPrice;
+          fmt = NumberFormat.currency(locale: 'en_US', symbol: '\$', decimalDigits: 0); // $ symbol
+        break;
+      case Currency.eur:
+        amount = usdPrice * eurRate;
+        fmt = NumberFormat.currency(locale: 'de_DE', symbol: '€', decimalDigits: 0);
+        break;
     }
+
+    return '${fmt.format(amount)}/month';
   }
 
   @override
@@ -68,34 +86,21 @@ class _UpgradePageState extends State<UpgradePage>
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                Text(
-                  'IDR',
-                  style: TextStyle(
-                    color: !isUSD ? Colors.white : Colors.white38,
-                    fontWeight: !isUSD ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-                Switch(
-                  value: isUSD,
-                  onChanged: (value) {
-                    setState(() {
-                      isUSD = value;
-                    });
-                  },
-                  activeColor: Colors.blueAccent,
-                  inactiveThumbColor: Colors.grey[700],
-                  inactiveTrackColor: Colors.grey[600],
-                ),
-                Text(
-                  'USD',
-                  style: TextStyle(
-                    color: isUSD ? Colors.white : Colors.white38,
-                    fontWeight: isUSD ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ],
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<Currency>(
+                value: _currency,
+                dropdownColor: Colors.grey[900],
+                iconEnabledColor: Colors.white,
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: Currency.idr, child: Text('IDR')),
+                  DropdownMenuItem(value: Currency.usd, child: Text('USD')),
+                  DropdownMenuItem(value: Currency.eur, child: Text('EURO')),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _currency = val);
+                },
+              ),
             ),
           ),
         ],
@@ -254,3 +259,5 @@ class _UpgradePageState extends State<UpgradePage>
     );
   }
 }
+
+enum Currency { idr, usd, eur }
