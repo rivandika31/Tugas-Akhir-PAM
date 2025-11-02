@@ -38,7 +38,7 @@ android {
 
 dependencies {
     // Tambahan penting untuk desugaring
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 
     // Pastikan dependency Flutter lainnya tetap di sini
 }

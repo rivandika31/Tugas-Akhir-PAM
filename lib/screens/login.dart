@@ -49,10 +49,18 @@ class _LoginPageState extends State<LoginPage>
 
     _database = await openDatabase(
       path,
-      version: 1,
-      onCreate: (db, version) {
-        return db.execute(
+      version: 2, // Bump version to match profile.dart
+      onCreate: (db, version) async {
+        await db.execute(
           'CREATE TABLE users(id INTEGER PRIMARY KEY, email TEXT, password TEXT)',
+        );
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS user_profiles(id INTEGER PRIMARY KEY, email TEXT, username TEXT, profile_image TEXT, created_at TEXT)',
+        );
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS user_profiles(id INTEGER PRIMARY KEY, email TEXT, username TEXT, profile_image TEXT, created_at TEXT)',
         );
       },
     );
@@ -192,7 +200,7 @@ class _LoginPageState extends State<LoginPage>
                         );
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const ChatBot()),
+                          MaterialPageRoute(builder: (context) => ChatBot(email: email)),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(

@@ -2,9 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:aplikasi_chat/screens/chat.dart';
+import 'package:aplikasi_chat/screens/payment_form.dart';
+
 
 class UpgradePage extends StatefulWidget {
-  const UpgradePage({super.key});
+  final String email;
+  const UpgradePage({super.key, required this.email});
 
   @override
   State<UpgradePage> createState() => _UpgradePageState();
@@ -58,7 +61,7 @@ class _UpgradePageState extends State<UpgradePage>
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const ChatBot()),
+              MaterialPageRoute(builder: (context) => ChatBot(email: widget.email)),
             );
           },
         ),
@@ -207,16 +210,43 @@ class _UpgradePageState extends State<UpgradePage>
                   ),
                 )),
             const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                price,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  price,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black.withOpacity(0.2),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    final paid = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => PaymentFormPage(
+                          planName: title,
+                          priceLabel: price,
+                        ),
+                      ),
+                    );
+                    if (paid == true && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Terima kasih! $title telah aktif.'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Pay'),
+                )
+              ],
             ),
           ],
         ),

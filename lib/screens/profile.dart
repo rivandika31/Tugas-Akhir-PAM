@@ -20,6 +20,7 @@ class _ProfilePageState extends State<ProfilePage>
   String? username;
   String? profileImageUrl;
   String? password;
+  String? userEmail;
   Database? _database;
   File? _selectedImage;
 
@@ -46,11 +47,17 @@ class _ProfilePageState extends State<ProfilePage>
 
     _database = await openDatabase(
       path,
-      version: 1,
+      version: 2, // Bump version to trigger onUpgrade
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, email TEXT, password TEXT)',
         );
+        await db.execute(
+          'CREATE TABLE IF NOT EXISTS user_profiles(id INTEGER PRIMARY KEY, email TEXT, username TEXT, profile_image TEXT, created_at TEXT)',
+        );
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // Ensure user_profiles table exists on upgrade
         await db.execute(
           'CREATE TABLE IF NOT EXISTS user_profiles(id INTEGER PRIMARY KEY, email TEXT, username TEXT, profile_image TEXT, created_at TEXT)',
         );
@@ -101,6 +108,7 @@ class _ProfilePageState extends State<ProfilePage>
         setState(() {
           username = results.first['username'] as String?;
           profileImageUrl = results.first['profile_image'] as String?;
+          userEmail = results.first['email'] as String?;
         });
       }
     }
@@ -265,25 +273,21 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  widget.email,
+                  userEmail ?? widget.email,
                   style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
                 const SizedBox(height: 30),
                 ElevatedButton.icon(
                   onPressed: () {
+                    final controller = TextEditingController(text: username ?? '');
                     showDialog(
                       context: context,
                       builder: (context) {
-                        final controller =
-                            TextEditingController(text: username ?? '');
                         return StatefulBuilder(
-                          builder: (context, setStateDialog) {
+                          builder: (dialogContext, setStateDialog) {
                             return AlertDialog(
                               backgroundColor: Colors.grey[900],
-                              title: const Text(
-                                'Edit Profile',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                              title: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
                               content: SingleChildScrollView(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -316,7 +320,7 @@ class _ProfilePageState extends State<ProfilePage>
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
+                                        const SizedBox(width: 5),
                                         ElevatedButton.icon(
                                           onPressed: () async {
                                             await _pickImage(ImageSource.camera);
@@ -355,14 +359,14 @@ class _ProfilePageState extends State<ProfilePage>
                                     setState(() {
                                       _selectedImage = null;
                                     });
-                                    Navigator.pop(context);
+                                    Navigator.pop(dialogContext);
                                   },
-                                  child: const Text('Cancel',
-                                      style: TextStyle(color: Colors.white70)),
+                                  child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
                                 ),
                                 TextButton(
                                   onPressed: () async {
-                                    if (controller.text.trim().isEmpty) {
+                                    final newUsername = controller.text.trim();
+                                    if (newUsername.isEmpty) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
                                           content: Text('Username cannot be empty'),
@@ -371,25 +375,17 @@ class _ProfilePageState extends State<ProfilePage>
                                       );
                                       return;
                                     }
-
                                     String? finalImagePath;
                                     if (_selectedImage != null) {
                                       finalImagePath = _selectedImage!.path;
                                     } else if (profileImageUrl != null) {
                                       finalImagePath = profileImageUrl;
                                     }
-
-                                    Navigator.pop(context);
-
-                                    await _updateProfile(
-                                      controller.text.trim(),
-                                      finalImagePath,
-                                    );
+                                    // Update database dan UI
+                                    await _updateProfile(newUsername, finalImagePath);
+                                    Navigator.pop(dialogContext);
                                   },
-                                  child: const Text(
-                                    'Save',
-                                    style: TextStyle(color: Colors.blueAccent),
-                                  ),
+                                  child: const Text('Save', style: TextStyle(color: Colors.blueAccent)),
                                 ),
                               ],
                             );
@@ -399,16 +395,11 @@ class _ProfilePageState extends State<ProfilePage>
                     );
                   },
                   icon: const Icon(Icons.edit, color: Colors.black),
-                  label: const Text(
-                    'Edit Profile',
-                    style: TextStyle(color: Colors.black),
-                  ),
+                  label: const Text('Edit Profile', style: TextStyle(color: Colors.black)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     elevation: 10,
                     shadowColor: Colors.white.withOpacity(0.5),
                   ),
@@ -434,14 +425,14 @@ class _ProfilePageState extends State<ProfilePage>
                               fontWeight: FontWeight.bold),
                         ),
                         const Divider(color: Colors.white24, height: 20),
-                        ListTile(
-                          leading:
-                              const Icon(Icons.email, color: Colors.white70),
-                          title: const Text('Email',
-                              style: TextStyle(color: Colors.white)),
-                          subtitle: Text(widget.email,
-                              style: const TextStyle(color: Colors.white70)),
-                        ),
+            ListTile(
+              leading:
+                const Icon(Icons.email, color: Colors.white70),
+              title: const Text('Email',
+                style: TextStyle(color: Colors.white)),
+              subtitle: Text(userEmail ?? widget.email,
+                style: const TextStyle(color: Colors.white70)),
+            ),
                         ListTile(
                           leading:
                               const Icon(Icons.lock, color: Colors.white70),
