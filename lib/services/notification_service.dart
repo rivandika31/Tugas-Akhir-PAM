@@ -29,12 +29,10 @@ class NotificationService {
     await _plugin.initialize(initializationSettings);
 
     if (Platform.isAndroid) {
-      // Create channel (safe to call multiple times)
       final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       await androidPlugin?.createNotificationChannel(_defaultChannel);
 
-  // Android 13+ runtime permission
   await androidPlugin?.requestNotificationsPermission();
     }
   }

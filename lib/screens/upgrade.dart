@@ -40,9 +40,8 @@ class _UpgradePageState extends State<UpgradePage>
   }
 
   String formatPrice(double usdPrice) {
-    // Simple static conversion rates relative to USD
-    const idrRate = 16658.0; // 1 USD -> 16,658 IDR
-    const eurRate = 0.92;    // 1 USD -> 0.92 EUR (approx)
+    const idrRate = 16658.0;
+    const eurRate = 0.92;
 
     late double amount;
     late NumberFormat fmt;

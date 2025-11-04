@@ -47,7 +47,7 @@ class _ProfilePageState extends State<ProfilePage>
 
     _database = await openDatabase(
       path,
-      version: 2, // Bump version to trigger onUpgrade
+      version: 2,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, email TEXT, password TEXT)',
@@ -57,7 +57,6 @@ class _ProfilePageState extends State<ProfilePage>
         );
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        // Ensure user_profiles table exists on upgrade
         await db.execute(
           'CREATE TABLE IF NOT EXISTS user_profiles(id INTEGER PRIMARY KEY, email TEXT, username TEXT, profile_image TEXT, created_at TEXT)',
         );
@@ -262,7 +261,6 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 20),
 
-                // Username
                 Text(
                   username ?? 'Set your username',
                   style: const TextStyle(

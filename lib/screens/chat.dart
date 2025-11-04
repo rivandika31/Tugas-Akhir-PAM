@@ -34,7 +34,7 @@ class _ChatBotState extends State<ChatBot>
   final List<_Msg> _messages = [];
 
   // Timezone toggle
-  TimeZone _zone = TimeZone.wib; // default WIB
+  TimeZone _zone = TimeZone.wib;
 
   @override
   void initState() {
@@ -49,7 +49,6 @@ class _ChatBotState extends State<ChatBot>
     );
     _animationController.forward();
 
-    // welcome message
     _messages.add(
       _Msg(
         text:
@@ -241,7 +240,6 @@ class _ChatBotState extends State<ChatBot>
   }
 
   String _formatTime(DateTime t) {
-    // Convert to desired timezone by offset from UTC
     final utc = t.toUtc();
     final offsetHours = switch (_zone) {
       TimeZone.wib => 7,
@@ -305,7 +303,6 @@ class _ChatBotState extends State<ChatBot>
       ),
       body: Stack(
         children: [
-          // main gradient background
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -315,10 +312,8 @@ class _ChatBotState extends State<ChatBot>
               ),
             ),
           ),
-          // content
           Column(
             children: [
-              // Floating timezone toggle under AppBar
               Container(
                 width: double.infinity,
                 color: Colors.black.withOpacity(0.2),
@@ -407,14 +402,12 @@ class _ChatBotState extends State<ChatBot>
                   ),
                 ),
               ),
-              // input
               SafeArea(
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
                   child: Row(
                     children: [
-                      // Media / file action buttons on the left
                       SizedBox(
                         key: _attachKey,
                         child: _RoundedIconButton(
@@ -477,8 +470,8 @@ class _Msg {
   final String? text;
   final bool isUser;
   final DateTime time;
-  final String? imagePath; // local path for image
-  final String? filePath;  // local path for file
+  final String? imagePath;
+  final String? filePath;
   _Msg({this.text, required this.isUser, required this.time, this.imagePath, this.filePath});
 }
 

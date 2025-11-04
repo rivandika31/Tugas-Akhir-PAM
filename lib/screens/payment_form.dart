@@ -40,7 +40,6 @@ class _PaymentFormPageState extends State<PaymentFormPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // If user backgrounds the app without completing payment, remind them
     if ((state == AppLifecycleState.paused || state == AppLifecycleState.detached) && !_completed) {
       NotificationService.instance
           .showPaymentReminder(planName: widget.planName);
@@ -49,7 +48,7 @@ class _PaymentFormPageState extends State<PaymentFormPage>
 
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
-    await Future.delayed(const Duration(milliseconds: 600)); // simulate network
+    await Future.delayed(const Duration(milliseconds: 600));
     setState(() => _completed = true);
 
     if (!mounted) return;

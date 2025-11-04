@@ -49,7 +49,7 @@ class _LoginPageState extends State<LoginPage>
 
     _database = await openDatabase(
       path,
-      version: 2, // Bump version to match profile.dart
+      version: 2,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE users(id INTEGER PRIMARY KEY, email TEXT, password TEXT)',
